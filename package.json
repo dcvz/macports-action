@@ -1,6 +1,6 @@
 {
   "name": "macports-action",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "github action to facilitate using macports",
   "main": "dist/restore/index.js",
   "scripts": {

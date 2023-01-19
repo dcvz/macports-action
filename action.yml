@@ -4,10 +4,12 @@ author: "David Chavez<david@dcvz.io>"
 inputs:
   version:
     description: "The version of MacPorts to use (must be above 2.8.0)"
+    required: false
     default: "2.8.0"
-  verbose:
-    description: "Verbosity level: 0 (default), 1 or 2."
-    default: 0
+  dependencies:
+    description: "The dependencies to install"
+    required: false
+    default: "[]"
 runs:
   using: "node16"
   main: "dist/install/index.js"

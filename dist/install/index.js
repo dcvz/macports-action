@@ -6760,10 +6760,21 @@ __nccwpck_require__.r(__webpack_exports__);
 
 
 
+// method that returns a positive integer hash code for a string
+const hashCode = function (s) {
+    let h = 0, l = s.length, i = 0;
+    if (l > 0)
+        while (i < l)
+            h = (h << 5) - h + s.charCodeAt(i++) | 0;
+    return h;
+};
 async function runInner() {
     const macportsVersion = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("version");
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.saveState("macportsVersion", macportsVersion);
-    let macportsPath = _actions_tool_cache__WEBPACK_IMPORTED_MODULE_2__.find("macports", macportsVersion);
+    const dependencies = JSON.parse(_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("dependencies"));
+    // create a version number hash from the version string and the dependencies
+    let versionHash = `${hashCode(macportsVersion + dependencies.join(""))}.0.0`;
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Version hash: ${versionHash}`);
+    let macportsPath = _actions_tool_cache__WEBPACK_IMPORTED_MODULE_2__.find("macports", versionHash);
     // check it is macos or reject
     if (process.platform !== "darwin") {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(`Unsupported platform: ${process.platform}`);
@@ -6793,7 +6804,6 @@ async function runInner() {
         let filename = "MacPorts-" + macportsVersion + installerSuffix;
         let downloadUrl = "https://github.com/macports/macports-base/releases/download/v" + macportsVersion + "/" + filename;
         const downloadPath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_2__.downloadTool(downloadUrl);
-        // create a temporary directory in which to install
         let tempDir = process.env["RUNNER_TEMPDIRECTORY"] || path__WEBPACK_IMPORTED_MODULE_4__.join("/Users", "runner", "temp", "temp_" + Math.floor(Math.random() * 2000000000));
         await _actions_io__WEBPACK_IMPORTED_MODULE_1__.mkdirP(tempDir);
         await _actions_io__WEBPACK_IMPORTED_MODULE_1__.cp(downloadPath, path__WEBPACK_IMPORTED_MODULE_4__.join(tempDir, filename));
@@ -6808,15 +6818,19 @@ async function runInner() {
         }
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(await _actions_io__WEBPACK_IMPORTED_MODULE_1__.which("port"));
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.addPath("/opt/local/bin:/opt/local/sbin");
+        // install dependencies
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup(`Install dependencies`);
+        await _actions_exec__WEBPACK_IMPORTED_MODULE_3__.exec("sudo port", ["selfupdate"]);
+        await _actions_exec__WEBPACK_IMPORTED_MODULE_3__.exec("sudo port", ["install", ...dependencies]);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
+        await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_2__.cacheDir("/opt/local", "macports", versionHash);
     }
-    // cache installation
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup("Cache MacPorts");
-    await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_2__.cacheDir("/opt/local", "macports", macportsVersion);
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
-    // make available in the environment
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup("Set path");
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.addPath("/opt/local/bin:/opt/local/sbin");
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
+    else {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Using cached MacPorts installation`);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`MacPorts path: ${macportsPath}`);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.addPath(`${path__WEBPACK_IMPORTED_MODULE_4__.join(macportsPath, "bin")}:${path__WEBPACK_IMPORTED_MODULE_4__.join(macportsPath, "sbin")}`);
+    }
 }
 async function run() {
     try {

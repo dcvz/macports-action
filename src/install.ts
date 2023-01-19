@@ -4,10 +4,24 @@ import * as tc from "@actions/tool-cache";
 import * as exec from "@actions/exec";
 import * as path from "path";
 
+// method that returns a positive integer hash code for a string
+const hashCode = function (s: string): number {
+    let h = 0,
+        l = s.length,
+        i = 0;
+    if (l > 0) while (i < l) h = (h << 5) - h + s.charCodeAt(i++) | 0;
+    return h;
+}
+
 async function runInner(): Promise<void> {
     const macportsVersion = core.getInput("version");
-    core.saveState("macportsVersion", macportsVersion);
-    let macportsPath = tc.find("macports", macportsVersion);
+    const dependencies = JSON.parse(core.getInput("dependencies"));
+
+    // create a version number hash from the version string and the dependencies
+    let versionHash = `${hashCode(macportsVersion + dependencies.join(""))}.0.0`;
+    core.info(`Version hash: ${versionHash}`);
+
+    let macportsPath = tc.find("macports", versionHash);
 
     // check it is macos or reject
     if (process.platform !== "darwin") {
@@ -55,17 +69,21 @@ async function runInner(): Promise<void> {
 
         core.info(await io.which("port"));
         core.endGroup();
+
+        core.addPath("/opt/local/bin:/opt/local/sbin");
+
+        // install dependencies
+        core.startGroup(`Install dependencies`);
+        await exec.exec("sudo port", ["selfupdate"]);
+        await exec.exec("sudo port", ["install", ...dependencies]);
+        core.endGroup();
+
+        await tc.cacheDir("/opt/local", "macports", versionHash);
+    } else {
+        core.info(`Using cached MacPorts installation`);
+        core.info(`MacPorts path: ${macportsPath}`);
+        core.addPath(`${path.join(macportsPath, "bin")}:${path.join(macportsPath, "sbin")}`);
     }
-
-    // cache installation
-    core.startGroup("Cache MacPorts");
-    await tc.cacheDir("/opt/local", "macports", macportsVersion);
-    core.endGroup();
-
-    // make available in the environment
-    core.startGroup("Set path");
-    core.addPath("/opt/local/bin:/opt/local/sbin");
-    core.endGroup();
 }
 
 async function run(): Promise<void> {
