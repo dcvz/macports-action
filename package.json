@@ -1,0 +1,35 @@
+{
+  "name": "macports-action",
+  "version": "0.0.1",
+  "description": "github action to facilitate using macports",
+  "main": "dist/restore/index.js",
+  "scripts": {
+    "prepare": "ncc build --target es2020 -o dist/install src/install.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dcvz/macports-action.git"
+  },
+  "keywords": [
+    "actions",
+    "macports",
+    "dependencies"
+  ],
+  "author": "David Chavez",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/cache": "^3.1.2",
+    "@actions/core": "^1.10.0",
+    "@actions/exec": "^1.1.1",
+    "@actions/io": "^1.1.2",
+    "@actions/tool-cache": "^2.0.1"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.36.0",
+    "typescript": "^4.9.4"
+  },
+  "bugs": {
+    "url": "https://github.com/dcvz/macports-action/issues"
+  },
+  "homepage": "https://github.com/dcvz/macports-action#readme"
+}

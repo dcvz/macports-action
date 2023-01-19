@@ -1,0 +1,16 @@
+name: "MacPorts for gh actions"
+description: "A GitHub Action that facilitates using MacPorts."
+author: "David Chavez<david@dcvz.io>"
+inputs:
+  version:
+    description: "The version of MacPorts to use (must be above 2.8.0)"
+    default: "2.8.0"
+  verbose:
+    description: "Verbosity level: 0 (default), 1 or 2."
+    default: 0
+runs:
+  using: "node16"
+  main: "dist/install/index.js"
+branding:
+  icon: "archive"
+  color: "gray-dark"
